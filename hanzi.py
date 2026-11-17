@@ -65,10 +65,10 @@ def is_cjk_char(char: str) -> bool:
 
 def normalize_text(raw_text: str) -> str:
     chars = [ch for ch in raw_text if not ch.isspace()]
-    if len(chars) != 8:
-        raise ValueError("Please enter exactly 8 Chinese characters (spaces are ignored).")
+    if len(chars) > 8:
+        raise ValueError("Please enter no more than 8 Chinese characters (spaces are ignored).")
     if not all(is_cjk_char(ch) for ch in chars):
-        raise ValueError("Input contains non-Chinese characters. Please enter only 8 Chinese characters.")
+        raise ValueError("Input contains non-Chinese characters. Please enter only Chinese characters.")
     return "".join(chars)
 
 
