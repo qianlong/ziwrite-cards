@@ -11,42 +11,19 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+#from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+from fontTools import ttLib
 
 DATA_SOURCE = "https://cdn.jsdelivr.net/npm/hanzi-writer-data@latest"
 CARD_WIDTH_CM = 8.7
 CARD_HEIGHT_CM = 5.8
 GRID_COLUMNS = 4
-PINYIN_FONT_NAME = "Helvetica"
+DEFAULT_HANZI_FONT_NAME = "I.Ming"
+DEFAULT_PINYIN_FONT_NAME = "STKaiti"
 PINYIN_HANZI_GAP_CM = 0.18
 MAX_COMMON_PINYIN = 3
-
-
-def register_pinyin_font() -> str:
-    global PINYIN_FONT_NAME
-
-    candidates = [
-        ("MicrosoftYaHei", r"C:\Windows\Fonts\msyh.ttf"),
-        ("MicrosoftYaHeiUI", r"C:\Windows\Fonts\msyh.ttc"),
-        ("SimHei", r"C:\Windows\Fonts\simhei.ttf"),
-        ("Arial", r"C:\Windows\Fonts\arial.ttf"),
-    ]
-
-    for font_name, font_path in candidates:
-        if not os.path.exists(font_path):
-            continue
-        try:
-            pdfmetrics.registerFont(TTFont(font_name, font_path))
-            PINYIN_FONT_NAME = font_name
-            return PINYIN_FONT_NAME
-        except Exception:
-            continue
-
-    PINYIN_FONT_NAME = "Helvetica"
-    return PINYIN_FONT_NAME
-
 
 def is_cjk_char(char: str) -> bool:
     code = ord(char)
@@ -383,7 +360,7 @@ def draw_stroke_frame(
         )
 
 
-def draw_card(c: canvas.Canvas, data: HanziData, layout: CardLayout) -> None:
+def draw_card(c: canvas.Canvas, data: HanziData, layout: CardLayout, hanzi_font_family: str, pinyin_font_family: str) -> None:
     c.saveState()
 
     c.setStrokeColor(colors.black)
@@ -399,22 +376,22 @@ def draw_card(c: canvas.Canvas, data: HanziData, layout: CardLayout) -> None:
     hanzi_font_size = 18
     group_gap = PINYIN_HANZI_GAP_CM * cm if data.pinyin else 0.0
 
-    c.setFont(PINYIN_FONT_NAME, pinyin_font_size)
-    pinyin_width = c.stringWidth(data.pinyin, PINYIN_FONT_NAME, pinyin_font_size) if data.pinyin else 0.0
+    c.setFont(pinyin_font_family, pinyin_font_size)
+    pinyin_width = c.stringWidth(data.pinyin, pinyin_font_family, pinyin_font_size) if data.pinyin else 0.0
 
-    c.setFont("STSong-Light", hanzi_font_size)
-    hanzi_width = c.stringWidth(data.character, "STSong-Light", hanzi_font_size)
+    c.setFont(hanzi_font_family, hanzi_font_size)
+    hanzi_width = c.stringWidth(data.character, hanzi_font_family, hanzi_font_size)
 
     total_width = pinyin_width + group_gap + hanzi_width
     group_start_x = center_x - total_width / 2
 
     if data.pinyin:
-        c.setFont(PINYIN_FONT_NAME, pinyin_font_size)
+        c.setFont(pinyin_font_family, pinyin_font_size)
         c.setFillColor(colors.HexColor("#333333"))
         c.drawString(group_start_x, title_y + 0.31 * cm, data.pinyin)
         c.setFillColor(colors.black)
 
-    c.setFont("STSong-Light", hanzi_font_size)
+    c.setFont(hanzi_font_family, hanzi_font_size)
     c.drawString(group_start_x + pinyin_width + group_gap, title_y + 0.28 * cm, data.character)
 
     area_x = layout.x + inner_padding
@@ -449,10 +426,8 @@ def draw_card(c: canvas.Canvas, data: HanziData, layout: CardLayout) -> None:
     c.restoreState()
 
 
-def generate_pdf(chars: str, output_path: str) -> None:
-    pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
-    register_pinyin_font()
-
+def generate_pdf(chars: str, output_path: str, hanzi_font_family: str, pinyin_font_family: str) -> None:
+    
     client = HanziWriterClient()
     items = [client.fetch(ch) for ch in chars]
 
@@ -464,33 +439,100 @@ def generate_pdf(chars: str, output_path: str) -> None:
         slot = index % len(card_layouts)
         if slot == 0 and index > 0:
             c.showPage()
-        draw_card(c, item, card_layouts[slot])
+        draw_card(c, item, card_layouts[slot], hanzi_font_family, pinyin_font_family)
 
     c.save()
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Enter 8 Chinese characters, download stroke order data, and generate 8.7x5.8 cm landscape card PDF."
+        description="Enter a sequence of Chinese characters, download stroke order data, and generate 8.7x5.8 cm landscape card PDF."
     )
-    parser.add_argument("--text", help="8 Chinese characters, e.g. 你好世界学习成长")
+    parser.add_argument("--text", help="A sequence of Chinese characters, e.g. 你好世界学习成长")
     parser.add_argument("--output", default="hanzi_cards.pdf", help="Output PDF filename")
+    parser.add_argument("--hanzi-font-family", default="I.Ming", help="Hanzi font family name")
+    parser.add_argument("--pinyin-font-family", default="STKaiti", help="Pinyin font family name")
+    parser.add_argument("--font_file_paths", default="./Fonts/I.Ming/I.Ming-8.10.ttf;./Fonts/Stkaiti/stkaiti.ttf", help="Semicolon-separated list of font file paths.")
     return parser.parse_args()
 
+
+def register_fonts(hanzi_font_family: str, pinyin_font_family: str, font_paths: list[str]) -> None:
+    
+    registered_fonts = pdfmetrics.getRegisteredFontNames()
+    
+    for font_path in font_paths:
+        
+        if not os.path.exists(font_path):
+            print(f"Font file not found: {font_path}")
+            continue
+        
+        font = ttLib.TTFont(font_path)
+        font_name = font["name"]
+        font_family_name = font_name.getBestFamilyName()
+    
+        if font_family_name in registered_fonts:
+            print(f"Font already registered: {font_family_name}")
+            continue
+        
+        if not font_family_name in [hanzi_font_family, pinyin_font_family]:
+            print(f"Skipping font: {font_name.getBestFullName()} (family name: {font_family_name})")
+            continue
+        
+        print(f"Registering font: {font_name.getBestFullName()} (family name: {font_family_name})")
+        pdfmetrics.registerFont(TTFont(font_family_name, font_path))
+        registered_fonts.append(font_family_name)
+        
 
 def main() -> int:
     args = parse_args()
     try:
-        raw = args.text if args.text else input("Enter 8 Chinese characters: ")
+        if not args.text:
+            print(f"No text provided; please use the --text argument to specify the Chinese characters.")
+            return 1
+
+        if not args.output:
+            print(f"No output filename provided; please use the --output argument to specify the output PDF filename.")
+            return 1
+
+        hanzi_font_family = DEFAULT_HANZI_FONT_NAME
+        if args.hanzi_font_family:
+            hanzi_font_family = args.hanzi_font_family
+            print(f"Using {hanzi_font_family} for Hanzi characters")
+        else:
+            print(f"No Hanzi font provided: using {hanzi_font_family}")
+
+        pinyin_font_family = DEFAULT_PINYIN_FONT_NAME
+        if args.pinyin_font_family:
+            pinyin_font_family = args.pinyin_font_family
+            print(f"Using {pinyin_font_family} for Pinyin characters")
+        else:
+            print(f"No Pinyin font provided: using {pinyin_font_family}")
+        
+        font_file_paths = [
+                        r"./Fonts/I.Ming/I.Ming-8.10.ttf",
+                        r"./Fonts/Stkaiti/stkaiti.ttf"
+                    ]
+        
+        if args.font_file_paths:
+            font_file_paths = args.font_file_paths.split(";")
+        
+        raw = args.text
+        
+        register_fonts(
+            hanzi_font_family,
+            pinyin_font_family,
+            font_file_paths)
+        
         chars = normalize_text(raw)
-        generate_pdf(chars, args.output)
+        generate_pdf(chars, args.output, hanzi_font_family, pinyin_font_family)
         print(f"PDF generated: {args.output}")
         print(f"Data source: {DATA_SOURCE}")
         return 0
+    
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-
+    
 
 if __name__ == "__main__":
     raise SystemExit(main())
