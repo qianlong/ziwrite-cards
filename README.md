@@ -2,13 +2,13 @@
 
 ## 项目简介 | Description
 
-一个 Python 工具：输入 8 个汉字，自动生成可打印的汉字笔顺卡片（8.7 × 5.8 cm），包含拼音和分步笔顺图。
+一个 Python 工具：输入 个汉字，自动生成可打印的汉字笔顺卡片（8.7 × 5.8 cm），包含拼音和分步笔顺图。
 
-A Python tool that generates printable Chinese stroke-order cards (8.7×5.8 cm) from 8 input characters, with pinyin and step-by-step stroke frames.
+A Python tool that generates printable Chinese stroke-order cards (8.7×5.8 cm) from input characters, with pinyin and step-by-step stroke frames.
 
-输入 **8 个汉字** 后，脚本会从 **Hanzi Writer Data（jsDelivr CDN）** 下载每个字的笔画中线数据（medians），并生成卡片 PDF。
+输入 **个汉字** 后，脚本会从 **Hanzi Writer Data（jsDelivr CDN）** 下载每个字的笔画中线数据（medians），并生成卡片 PDF。
 
-Enter a set of **8 Chinese characters**. The script downloads stroke-order data (medians) for each character from **Hanzi Writer Data (jsDelivr CDN)** and generates a PDF with **8.7 × 5.8 cm (landscape)** cards.
+Enter a sequence of **Chinese characters**. The script downloads stroke-order data (medians) for each character from **Hanzi Writer Data (jsDelivr CDN)** and generates a PDF with **8.7 × 5.8 cm (landscape)** cards.
 
 ## 快速开始 | Quick Start
 
@@ -20,16 +20,10 @@ python -m pip install -r requirements.txt
 
 ### 2) 运行方式 | Usage
 
-### 交互式输入 | Interactive Input
+### 命令行传参 | Command Line
 
 ```bash
-python hanzi.py
-```
-
-### 命令行传参 | Pass Text via Command Line
-
-```bash
-python hanzi.py --text "你好世界学习成长" --output "cards.pdf"
+python hanzi.py --text "你好世界学习成长" --hanzi_font_family "I.Ming" --pinyin_font_family "STKaiti" --font_file_paths "./Fonts/I.Ming/I.Ming-8.10.ttf;./Fonts/Stkaiti/stkaiti.ttf" --output "cards.pdf"
 ```
 
 ## 功能特性 | Features

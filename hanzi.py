@@ -450,8 +450,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--text", help="A sequence of Chinese characters, e.g. 你好世界学习成长")
     parser.add_argument("--output", default="hanzi_cards.pdf", help="Output PDF filename")
-    parser.add_argument("--hanzi-font-family", default="I.Ming", help="Hanzi font family name")
-    parser.add_argument("--pinyin-font-family", default="STKaiti", help="Pinyin font family name")
+    parser.add_argument("--hanzi_font_family", default="I.Ming", help="Hanzi font family name")
+    parser.add_argument("--pinyin_font_family", default="STKaiti", help="Pinyin font family name")
     parser.add_argument("--font_file_paths", default="./Fonts/I.Ming/I.Ming-8.10.ttf;./Fonts/Stkaiti/stkaiti.ttf", help="Semicolon-separated list of font file paths.")
     return parser.parse_args()
 
