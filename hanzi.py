@@ -13,8 +13,8 @@ from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 #from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.ttfonts import TTFontFile
 from reportlab.pdfgen import canvas
-from fontTools import ttLib
 
 DATA_SOURCE = "https://cdn.jsdelivr.net/npm/hanzi-writer-data@latest"
 CARD_WIDTH_CM = 8.7
@@ -456,6 +456,29 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def findFontFamilyName(font_path):
+    "Extract a font-family name from a font file."
+
+    #print(f"Finding font family name in file: {font_path}")
+
+    font_file = TTFontFile(font_path)
+        
+    # `raw_name` is a byte string (e.g., b'MyFontFamily')
+    # raw_name = font_file.name
+    raw_name = font_file.familyName
+
+    result = raw_name
+    # Decode bytes to a standard Python string
+    if isinstance(raw_name, bytes):
+        # Try decoding with UTF-8, falling back to Latin-1 if necessary
+        result = raw_name.decode('utf-8', errors='ignore')
+    else:
+        result = str(raw_name)
+    
+    print(f"Found font family name: {result}")
+    return result
+    
+
 def register_fonts(hanzi_font_family: str, pinyin_font_family: str, font_paths: list[str]) -> None:
     
     registered_fonts = pdfmetrics.getRegisteredFontNames()
@@ -466,19 +489,17 @@ def register_fonts(hanzi_font_family: str, pinyin_font_family: str, font_paths: 
             print(f"Font file not found: {font_path}")
             continue
         
-        font = ttLib.TTFont(font_path)
-        font_name = font["name"]
-        font_family_name = font_name.getBestFamilyName()
+        font_family_name = findFontFamilyName(font_path)
     
         if font_family_name in registered_fonts:
             print(f"Font already registered: {font_family_name}")
             continue
         
         if not font_family_name in [hanzi_font_family, pinyin_font_family]:
-            print(f"Skipping font: {font_name.getBestFullName()} (family name: {font_family_name})")
+            print(f"Skipping font: {font_family_name}")
             continue
         
-        print(f"Registering font: {font_name.getBestFullName()} (family name: {font_family_name})")
+        print(f"Registering font: {font_family_name}")
         pdfmetrics.registerFont(TTFont(font_family_name, font_path))
         registered_fonts.append(font_family_name)
         
