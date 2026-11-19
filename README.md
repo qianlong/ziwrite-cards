@@ -1,5 +1,7 @@
 # 汉字笔顺卡片 PDF 生成器 | Chinese Stroke-Order Card PDF Generator
 
+![icon](./Icon/Icon.svg)
+
 ## 项目简介 | Description
 
 一个 Python 工具：输入 个汉字，自动生成可打印的汉字笔顺卡片（8.7 × 5.8 cm），包含拼音和分步笔顺图。
@@ -15,6 +17,7 @@ Enter a sequence of **Chinese characters**. The script downloads stroke-order da
 ### 1) 安装依赖 | Install Dependencies
 
 ```bash
+cd src
 python -m pip install -r requirements.txt
 ```
 
@@ -23,7 +26,7 @@ python -m pip install -r requirements.txt
 ### 命令行传参 | Command Line
 
 ```bash
-python hanzi.py --text "你好世界学习成长" --hanzi_font_family "I.Ming" --pinyin_font_family "STKaiti" --font_file_paths "./Fonts/I.Ming/I.Ming-8.10.ttf;./Fonts/Stkaiti/stkaiti.ttf" --output "cards.pdf"
+python ziwritecards.py --text "你好世界学习成长" --hanzi_font_family "I.Ming" --pinyin_font_family "STKaiti" --font_file_paths "../Fonts/I.Ming/I.Ming-8.10.ttf;../Fonts/Stkaiti/stkaiti.ttf" --output "cards.pdf"
 ```
 
 ## 功能特性 | Features
