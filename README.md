@@ -1,5 +1,7 @@
 # 汉字笔顺卡片 PDF 生成器 | Chinese Stroke-Order Card PDF Generator
 
+Originally forked from https://github.com/qianlong/ziwrite-cards
+
 ![icon](./Icon/Icon.svg)
 
 ## 项目简介 | Description
