@@ -1,0 +1,9 @@
+# Git
+.git
+.gitignore
+
+LICENSE
+README.md
+Icon/*.png
+Icon/*.svg
+Fonts
